@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1F2; --panel:#FFFFFF; --ink:#16262E; --ink2:#51646D; --ink3:#8496A0; --rule:#D3DBDE; --rule2:#E6EBED;
+  --ok:#1E7A4F; --ok-bg:#E4F3EB; --rev:#B26B00; --rev-bg:#FBF0DC; --hold:#6A4C9C; --hold-bg:#EEE8F7; --rej:#B1362E; --rej-bg:#FAE6E4;
+  --accent:#16262E;
+  --head:"Bricolage Grotesque","Hanken Grotesk",system-ui,sans-serif;
+  --body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #2B6CB0;outline-offset:2px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- top bar */
+.top{display:flex;align-items:center;gap:28px;padding:14px 28px;background:var(--ink);color:#fff}
+.brand{font:700 20px var(--head);letter-spacing:-.01em}
+.brand small{font:400 13px var(--body);opacity:.65;margin-left:10px;letter-spacing:0}
+.tabs{display:flex;gap:4px;margin-left:12px}
+.tab{background:none;border:0;color:#fff;opacity:.65;padding:8px 14px;border-radius:6px;font-weight:500}
+.tab[aria-selected=true]{opacity:1;background:rgba(255,255,255,.14)}
+.tab:hover{opacity:1}
+.spacer{flex:1}
+.pill{font-size:12.5px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.12)}
+
+/* ---------- process layout */
+.wrap{padding:22px 28px 60px;max-width:1500px;margin:0 auto}
+.grid{display:grid;grid-template-columns:300px minmax(380px,1fr) 440px;gap:22px;align-items:start}
+@media (max-width:1180px){.grid{grid-template-columns:280px 1fr}.grid .result{grid-column:1/-1}}
+@media (max-width:760px){.grid{grid-template-columns:1fr}.top{flex-wrap:wrap;padding:12px 16px}.wrap{padding:16px}}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+.panel h2{font:700 17px var(--head);margin:0;padding:16px 18px 4px;letter-spacing:-.005em}
+.panel .sub{color:var(--ink2);font-size:13.5px;padding:0 18px 12px}
+
+/* inbox */
+.drop{margin:2px 14px 12px;border:1.5px dashed var(--rule);border-radius:8px;padding:14px;text-align:center;color:var(--ink2);font-size:14px;background:#FAFBFB}
+.drop.over{border-color:var(--ink);background:#F1F5F6}
+.drop button{margin-top:6px;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:6px;padding:7px 12px;font-weight:500}
+.drop button:disabled{opacity:.4;cursor:not-allowed}
+.inbox-col{position:sticky;top:16px;align-self:start}
+.inbox{list-style:none;margin:0;padding:0 0 6px;border-top:1px solid var(--rule2);max-height:calc(100vh - 360px);min-height:220px;overflow-y:auto}
+.inbox li{border-bottom:1px solid var(--rule2)}
+.inbox li:last-child{border-bottom:0}
+.item{display:block;width:100%;text-align:left;background:none;border:0;padding:11px 18px;border-left:3px solid transparent}
+.item:hover:not(:disabled){background:#F5F8F8}
+.item:disabled{opacity:.5;cursor:wait}
+.item.active{background:#F1F5F6;border-left-color:var(--ink)}
+.item b{display:block;font-weight:600;font-size:14.5px}
+.item span{display:block;color:var(--ink2);font-size:13px;margin-top:1px}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.tag.happy{background:var(--ok-bg);color:var(--ok)}
+.tag.edge{background:var(--rev-bg);color:var(--rev)}
+.foot{padding:12px 18px;border-top:1px solid var(--rule2);font-size:13px;color:var(--ink2);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.linkbtn{background:none;border:0;color:#2B6CB0;padding:0;text-decoration:underline;text-underline-offset:2px}
+
+/* audit trail */
+.trail{padding:6px 18px 18px}
+.empty{padding:34px 18px 40px;color:var(--ink2);text-align:center}
+.empty b{display:block;font:700 18px var(--head);color:var(--ink);margin-bottom:4px}
+.stage{display:grid;grid-template-columns:34px 1fr;gap:0 12px;position:relative;padding-bottom:16px}
+.stage:not(:last-child)::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--rule)}
+.stage.done:not(:last-child)::before{background:#9FB0B8}
+.dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--head);background:var(--paper);color:var(--ink3);border:2px solid var(--rule);position:relative;z-index:1}
+.stage.running .dot{border-color:var(--ink);color:var(--ink)}
+.stage.running .dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid transparent;border-top-color:var(--ink);animation:spin .8s linear infinite}
+.stage.pass .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.stage.warn .dot{background:var(--rev);border-color:var(--rev);color:#fff}
+.stage.fail .dot{background:var(--rej);border-color:var(--rej);color:#fff}
+.stage h3{margin:4px 0 0;font:600 15.5px var(--body)}
+.stage.pending h3{color:var(--ink3);font-weight:500}
+.stage .sum{color:var(--ink2);font-size:13.5px;margin-top:1px}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.checks li{display:grid;grid-template-columns:18px 1fr;gap:6px;font-size:13.5px;line-height:1.4;color:var(--ink2)}
+.checks .mk{font-weight:700;text-align:center}
+.checks .pass .mk{color:var(--ok)} .checks .warn .mk{color:var(--rev)} .checks .fail .mk{color:var(--rej)} .checks .info .mk{color:var(--ink3)}
+.checks b{color:var(--ink);font-weight:600}
+.checks .fail,.checks .warn{color:var(--ink)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* result */
+.result .body{padding:0 18px 18px}
+.stampwrap{padding:18px 18px 6px;display:flex;align-items:center;gap:16px}
+.stamp{font:700 24px var(--head);letter-spacing:.01em;border:3px solid currentColor;border-radius:6px;padding:4px 14px 5px;transform:rotate(-4deg);outline:2px solid currentColor;outline-offset:-8px;opacity:.95;white-space:nowrap}
+.stamp.APPROVED{color:var(--ok)} .stamp.NEEDS_REVIEW{color:var(--rev)} .stamp.ON_HOLD{color:var(--hold)} .stamp.REJECTED{color:var(--rej)}
+.stamp.land{animation:thud .34s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes thud{0%{transform:rotate(-12deg) scale(1.9);opacity:0}70%{transform:rotate(-4deg) scale(.96);opacity:1}100%{transform:rotate(-4deg) scale(1)}}
+.conf{font-size:13px;color:var(--ink2)}
+.headline{font:600 17px/1.35 var(--body);padding:8px 18px 4px;margin:0}
+.sec{margin-top:16px}
+.sec h4{margin:0 0 6px;font:700 14.5px var(--head)}
+.sec ul{margin:0;padding-left:18px;color:var(--ink2);font-size:14px}
+.sec li{margin:3px 0}
+.msg{border:1px solid var(--rule);border-radius:8px;background:#FAFBFB;font-size:13.5px}
+.msg summary{padding:9px 12px;cursor:pointer;font-weight:600}
+.msg pre{margin:0;padding:0 12px 12px;white-space:pre-wrap;font:13px/1.5 var(--body);color:var(--ink2)}
+table.kv{width:100%;border-collapse:collapse;font-size:13.5px}
+table.kv td{padding:5px 0;border-bottom:1px solid var(--rule2);vertical-align:top}
+table.kv td:first-child{color:var(--ink2);width:42%}
+.src{font-size:11.5px;color:var(--ink3);margin-left:6px}
+.src.low{color:var(--rev);font-weight:600}
+iframe.pdf{width:100%;height:380px;border:1px solid var(--rule);border-radius:8px;background:#fff}
+.resbar{display:flex;gap:10px;padding:0 18px 12px;font-size:13px;color:var(--ink2)}
+
+/* dashboard */
+.kpis{display:flex;flex-wrap:wrap;background:var(--panel);border:1px solid var(--rule);border-radius:10px;margin-bottom:18px}
+.kpi{flex:1 1 150px;padding:16px 20px;border-right:1px solid var(--rule2)}
+.kpi:last-child{border-right:0}
+.kpi b{display:block;font:700 28px/1.1 var(--head);letter-spacing:-.01em}
+.kpi span{color:var(--ink2);font-size:13.5px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:14px 18px;border-bottom:1px solid var(--rule2)}
+.chip{border:1px solid var(--rule);background:#fff;border-radius:99px;padding:5px 12px;font-size:13.5px}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.toolbar input{margin-left:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 10px;font:inherit;min-width:220px}
+.tablewrap{overflow-x:auto}
+table.runs{width:100%;border-collapse:collapse;font-size:14px}
+table.runs th{text-align:left;font-weight:600;color:var(--ink2);padding:10px 14px;border-bottom:1px solid var(--rule);white-space:nowrap;background:#FAFBFB}
+table.runs td{padding:11px 14px;border-bottom:1px solid var(--rule2);vertical-align:top}
+table.runs tr.row{cursor:pointer}
+table.runs tr.row:hover{background:#F5F8F8}
+table.runs td.r,table.runs th.r{text-align:right}
+.st{display:inline-block;font-weight:600;font-size:12.5px;padding:2px 9px;border-radius:5px;white-space:nowrap}
+.st.APPROVED{background:var(--ok-bg);color:var(--ok)} .st.NEEDS_REVIEW{background:var(--rev-bg);color:var(--rev)}
+.st.ON_HOLD{background:var(--hold-bg);color:var(--hold)} .st.REJECTED{background:var(--rej-bg);color:var(--rej)}
+.hl{color:var(--ink2);font-size:13px;max-width:430px}
+.mut{color:var(--ink3)}
+.hidden{display:none!important}
+
+/* review controls */
+.review{border:1px solid var(--rule);border-radius:8px;background:#FAFBFB;padding:12px 14px}
+.review h4{margin:0 0 4px}
+.review p{margin:0 0 8px;color:var(--ink2);font-size:13.5px}
+.review textarea{width:100%;min-height:54px;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font:inherit;resize:vertical;background:#fff}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:6px;padding:8px 13px;font-weight:600;font-size:14px}
+.btn.alt{background:#fff;color:var(--ink)}
+.btn.danger{background:#fff;color:var(--rej);border-color:var(--rej)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.resolved{border-left:4px solid var(--ink);background:#F1F5F6;border-radius:0 8px 8px 0;padding:10px 14px;font-size:14px}
+.resolved b{display:block;margin-bottom:2px}
+.resolved span{color:var(--ink2)}
+.err{color:var(--rej);font-size:13.5px;margin-top:6px}
+/* dashboard extras */
+.cols{display:grid;grid-template-columns:minmax(300px,1fr) minmax(300px,1fr);gap:18px;margin-bottom:18px}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.box h3{margin:0 0 10px;font:700 16px var(--head)}
+.bar{display:grid;grid-template-columns:minmax(120px,210px) 1fr 28px;gap:10px;align-items:center;font-size:13.5px;margin:6px 0}
+.bar i{display:block;height:9px;border-radius:5px;background:var(--ink);opacity:.8}
+.bar span.n{text-align:right;color:var(--ink2)}
+.note{color:var(--ink2);font-size:13.5px;margin:6px 0 0}
+.res{font-size:12px;color:var(--ink2);margin-top:3px}
+/* rules + evaluation */
+.page{display:grid;grid-template-columns:minmax(320px,1.15fr) minmax(300px,.85fr);gap:22px;align-items:start}
+@media (max-width:900px){.page{grid-template-columns:1fr}}
+.sop{margin:0;padding:0 18px 18px 40px;color:var(--ink2);font-size:14.5px}
+.sop li{margin:9px 0;padding-left:4px}
+.sop b{color:var(--ink)}
+.form{padding:0 18px 18px;display:grid;gap:12px}
+.form label{display:grid;gap:4px;font-weight:600;font-size:14px}
+.form label small{font-weight:400;color:var(--ink2);font-size:12.5px}
+.form input{border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font:inherit;max-width:180px}
+.form input:disabled{background:#F1F5F6;color:var(--ink2)}
+.prec{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:0 18px 16px;font-size:13.5px}
+.evalsum{display:flex;flex-wrap:wrap;gap:0;margin:14px 18px;border:1px solid var(--rule);border-radius:8px}
+.evalsum div{flex:1 1 160px;padding:12px 16px;border-right:1px solid var(--rule2)}
+.evalsum div:last-child{border-right:0}
+.evalsum b{display:block;font:700 24px var(--head)}
+.evalsum span{color:var(--ink2);font-size:13.5px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--rej);font-weight:700}
+.intro{padding:0 18px 12px;color:var(--ink2);font-size:14px;max-width:80ch}
+
+@media (prefers-reduced-motion:reduce){.stamp.land{animation:none}.stage.running .dot::after{animation-duration:2.5s}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Invoice desk<small>AP decisions with the reasoning shown</small></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-process" aria-selected="true">Process an invoice</button>
+    <button class="tab" role="tab" id="tab-dash" aria-selected="false">Dashboard</button>
+    <button class="tab" role="tab" id="tab-rules" aria-selected="false">Rules</button>
+    <button class="tab" role="tab" id="tab-eval" aria-selected="false">Evaluation</button>
+  </nav>
+  <div class="spacer"></div>
+  <span class="pill" id="llmPill">Rules extraction</span>
+</header>
+
+<main class="wrap">
+<!-- ================= PROCESS ================= -->
+<section id="view-process" class="grid">
+  <aside class="panel inbox-col">
+    <h2>Invoice inbox</h2>
+    <p class="sub">Pick a sample or drop in your own PDF.</p>
+    <div class="drop" id="drop">
+      Drop a PDF here
+      <div><button id="pickBtn">Choose file</button></div>
+      <input type="file" id="fileInput" accept="application/pdf,.pdf" class="hidden">
+    </div>
+    <ul class="inbox" id="inbox"></ul>
+    <div class="foot"><span>Your own sandbox: nobody else sees these runs.</span><button class="linkbtn" id="resetBtn">Reset my data</button></div>
+  </aside>
+
+  <section class="panel">
+    <h2>Audit trail</h2>
+    <p class="sub" id="trailSub">Each check appears here as it runs.</p>
+    <div id="trail" class="trail"></div>
+  </section>
+
+  <section class="panel result" id="result">
+    <h2>Decision</h2>
+    <div id="resultBody"><div class="empty"><b>No decision yet</b>Run an invoice and the verdict, reasons and next steps land here.</div></div>
+  </section>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="view-dash" class="hidden">
+  <div class="kpis" id="kpis"></div>
+  <div class="cols">
+    <div class="box"><h3>Why invoices get flagged</h3><div id="flags"></div></div>
+    <div class="box"><h3>Time saved (estimate)</h3><p class="note" id="roi"></p></div>
+  </div>
+  <div class="panel">
+    <div class="toolbar">
+      <button class="chip" data-f="ALL" aria-pressed="true">All</button>
+      <button class="chip" data-f="APPROVED" aria-pressed="false">Approved</button>
+      <button class="chip" data-f="PENDING" aria-pressed="false">Waiting for a person</button>
+      <button class="chip" data-f="NEEDS_REVIEW" aria-pressed="false">Needs review</button>
+      <button class="chip" data-f="ON_HOLD" aria-pressed="false">On hold</button>
+      <button class="chip" data-f="REJECTED" aria-pressed="false">Rejected</button>
+      <input id="search" type="search" placeholder="Search vendor, invoice or PO" aria-label="Search runs">
+    </div>
+    <div class="tablewrap"><table class="runs">
+      <thead><tr><th>When</th><th>Vendor</th><th>Invoice</th><th>PO</th><th class="r">Total</th><th>Decision</th><th>Why</th><th class="r">Time</th></tr></thead>
+      <tbody id="runRows"></tbody>
+    </table></div>
+    <div class="empty hidden" id="dashEmpty"><b>No runs yet</b>Process an invoice and it will show up here with its decision and reasoning.</div>
+  </div>
+</section>
+
+<!-- ================= RULES ================= -->
+<section id="view-rules" class="hidden page">
+  <div class="panel">
+    <h2>How a decision is made</h2>
+    <p class="sub">In plain language, with the live thresholds filled in.</p>
+    <ol class="sop" id="sop"></ol>
+    <div class="prec"><b>When checks disagree, the strictest wins:</b>
+      <span class="st REJECTED">Rejected</span>&gt;<span class="st ON_HOLD">On hold</span>&gt;<span class="st NEEDS_REVIEW">Needs review</span>&gt;<span class="st APPROVED">Approved</span></div>
+  </div>
+  <div class="panel">
+    <h2>Thresholds</h2>
+    <p class="sub" id="rulesNote"></p>
+    <form class="form" id="rulesForm" autocomplete="off">
+      <label>Auto-approve if over the PO by no more than (%)<input id="f_auto_pct" type="number" step="0.1" min="0" max="100"></label>
+      <label>...and no more than ($)<input id="f_auto_abs" type="number" step="1" min="0"></label>
+      <label>Send to a person up to (% over the PO)<small>Beyond this, the invoice is rejected as a dispute.</small><input id="f_review_pct" type="number" step="0.5" min="0" max="100"></label>
+      <label>Duplicate window (days)<input id="f_dup_days" type="number" step="1" min="0" max="90"></label>
+      <label>Minimum scan quality (OCR confidence, %)<input id="f_ocr" type="number" step="1" min="0" max="100"></label>
+      <label>Minutes to handle one invoice by hand<small>Only used for the time-saved estimate. It is an assumption.</small><input id="f_minutes" type="number" step="1" min="0" max="240"></label>
+      <div class="btns" id="rulesBtns"><button class="btn" id="saveRules" type="submit">Save thresholds</button><button class="btn alt" id="defaultRules" type="button">Restore defaults</button></div>
+      <div class="err" id="rulesErr" role="alert"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ================= EVALUATION ================= -->
+<section id="view-eval" class="hidden">
+  <div class="panel">
+    <h2>Evaluation</h2>
+    <p class="intro">Runs every built-in invoice through the current rules in a clean sandbox and compares each decision with the expected one. These are the cases the rules were built around, so this is a regression check, not an independent accuracy score. It uses the rule-based path only, so the result is repeatable.</p>
+    <div class="btns" style="padding:0 18px 14px"><button class="btn" id="evalBtn">Run evaluation</button></div>
+    <div id="evalOut"></div>
+  </div>
+</section>
+</main>
+
+<script>
+const STAGES=[["ingest","Read document"],["extract","Extract fields"],["validate","Validate completeness"],["vendor","Check vendor"],
+["po_match","Match purchase order"],["amounts","Check amounts"],["duplicates","Check duplicates"],["decide","Decide"]];
+const LABEL={APPROVED:"Approved",NEEDS_REVIEW:"Needs review",ON_HOLD:"On hold",REJECTED:"Rejected"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=v=>v==null?"n/a":"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct=v=>(Math.round(v*1000)/10)+"%";
+const ADMIN=new URLSearchParams(location.search).get("admin")||"";
+let samples=[], busy=false, cur=null, es=null, allRuns=[], filter="ALL", settings=null;
+
+/* ---------- tabs */
+const VIEWS=["process","dash","rules","eval"];
+function show(view){
+  VIEWS.forEach(v=>{$("#view-"+v).classList.toggle("hidden",v!==view);$("#tab-"+v).setAttribute("aria-selected",v===view)});
+  if(view==="dash")loadDash(); if(view==="rules")loadRules();
+}
+VIEWS.forEach(v=>$("#tab-"+v).onclick=()=>show(v));
+
+/* ---------- inbox */
+async function init(){
+  samples=await (await fetch("/api/samples")).json();
+  $("#inbox").innerHTML=samples.map(s=>`<li><button class="item" data-id="${s.id}"><b>${esc(s.title)}<span class="tag ${s.tag}">${s.tag==="happy"?"Happy path":"Edge case"}</span></b><span>${esc(s.description)}</span></button></li>`).join("");
+  document.querySelectorAll(".item").forEach(b=>b.onclick=()=>runSample(b.dataset.id));
+  try{const i=await (await fetch("/api/info")).json(); $("#llmPill").textContent=i.crosscheck?"Rules + Claude cross-check":i.llm_fallback?"Rules + Claude fallback":"Rules extraction (no LLM key set)";}catch(e){}
+  renderTrail();
+}
+function setBusy(b){busy=b;document.querySelectorAll(".item").forEach(x=>x.disabled=b);$("#pickBtn").disabled=b}
+async function runSample(id){
+  if(busy)return;
+  const fd=new FormData();fd.append("sample_id",id);
+  document.querySelectorAll(".item").forEach(x=>x.classList.toggle("active",x.dataset.id===id));
+  await start(fd);
+}
+async function runFile(f){
+  if(busy||!f)return;
+  const fd=new FormData();fd.append("file",f);
+  document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"));
+  await start(fd);
+}
+async function start(fd){
+  setBusy(true);
+  const r=await fetch("/api/run",{method:"POST",body:fd});
+  if(!r.ok){const e=await r.json().catch(()=>({detail:"Upload failed"}));setBusy(false);
+    $("#trail").innerHTML=`<div class="empty"><b>Couldn't start the run</b>${esc(e.detail)}</div>`;return}
+  const {run_id,filename}=await r.json();
+  cur={runId:run_id,filename,stages:{},decision:null,live:true,resolution:null};
+  $("#trailSub").textContent=`Processing ${filename}`;
+  renderTrail();renderResult();
+  if(es)es.close();
+  es=new EventSource(`/api/runs/${run_id}/events`);
+  es.onmessage=m=>{const ev=JSON.parse(m.data);
+    if(ev.type==="stage"){cur.stages[ev.stage]=ev;renderTrail()}
+    else if(ev.type==="decision"){cur.decision=ev.result;renderResult(true)}
+    else if(ev.type==="done"){es.close();cur.live=false;setBusy(false);$("#trailSub").textContent=`Finished ${filename}`;renderResult(false)}
+  };
+  es.onerror=()=>{es.close();setBusy(false)};
+}
+/* drop zone */
+$("#pickBtn").onclick=()=>$("#fileInput").click();
+$("#fileInput").onchange=e=>{runFile(e.target.files[0]);e.target.value=""};
+const drop=$("#drop");
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>runFile(e.dataTransfer.files[0]));
+$("#resetBtn").onclick=async()=>{if(busy)return;if(!confirm("Clear your run history and restore the starting ledger? Other visitors are not affected."))return;
+  await fetch("/api/reset",{method:"POST"});cur=null;renderTrail();renderResult();$("#trailSub").textContent="Each check appears here as it runs.";
+  document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"));
+  if(!$("#view-dash").classList.contains("hidden"))loadDash()};
+
+/* ---------- audit trail */
+function renderTrail(){
+  const el=$("#trail");
+  if(!cur){el.innerHTML=`<div class="empty"><b>Nothing running</b>Pick an invoice from the inbox. Every check shows up here as it runs.</div>`;return}
+  el.innerHTML=STAGES.map(([k,label],i)=>{
+    const s=cur.stages[k];let cls="pending";
+    if(s)cls=s.state==="running"?"running":s.state;
+    const mark=cls==="pass"?"✓":cls==="warn"?"!":cls==="fail"?"✕":(i+1);
+    const checks=(s&&s.checks||[]).map(c=>`<li class="${c.state}"><span class="mk">${c.state==="pass"?"✓":c.state==="warn"?"!":c.state==="fail"?"✕":"i"}</span><span><b>${esc(c.name)}.</b> ${esc(c.detail)}</span></li>`).join("");
+    return `<div class="stage ${cls} ${s&&s.state!=="running"?"done":""}"><div class="dot">${mark}</div><div>
+      <h3>${esc(label)}</h3>${s&&s.summary?`<div class="sum">${esc(s.summary)}</div>`:""}${checks?`<ul class="checks">${checks}</ul>`:""}</div></div>`;
+  }).join("");
+}
+
+/* ---------- decision + review */
+function resWord(d,res){
+  const credit=d&&d.kind==="credit_note", hold=d&&d.status==="ON_HOLD";
+  if(res==="APPROVED")return credit?"Credit applied":hold?"Released for payment":"Approved for payment";
+  if(res==="REJECTED")return hold?"Voided as a duplicate":"Rejected";
+  return "Vendor asked for more information";
+}
+function reviewBlock(d){
+  if(cur.resolution){const r=cur.resolution;
+    return `<div class="sec"><div class="resolved"><b>${esc(resWord(d,r.resolution))} by a person</b>${r.note?`<span>"${esc(r.note)}"</span>`:`<span>No note added.</span>`}</div></div>`;}
+  if(!(d.status==="NEEDS_REVIEW"||d.status==="ON_HOLD")||cur.live)return "";
+  const credit=d.kind==="credit_note", hold=d.status==="ON_HOLD";
+  const ap=credit?"Mark credit as applied":hold?"Release: it's a new invoice":"Approve for payment";
+  const rj=hold?"Void: it's a duplicate":"Reject";
+  return `<div class="sec"><div class="review"><h4>Your call</h4><p>The decision is logged with your note and the ledger is updated.</p>
+    <textarea id="revNote" maxlength="500" placeholder="Add a note (optional)" aria-label="Note"></textarea>
+    <div class="btns"><button class="btn" data-act="approve">${ap}</button><button class="btn danger" data-act="reject">${rj}</button><button class="btn alt" data-act="request_info">Ask the vendor</button></div>
+    <div class="err" id="revErr" role="alert"></div></div></div>`;
+}
+async function doReview(act){
+  document.querySelectorAll(".review .btn").forEach(b=>b.disabled=true);
+  const note=($("#revNote")||{}).value||"";
+  const r=await fetch(`/api/runs/${cur.runId}/review`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:act,note})});
+  if(!r.ok){const e=await r.json().catch(()=>({detail:"Could not save"}));$("#revErr").textContent=e.detail;document.querySelectorAll(".review .btn").forEach(b=>b.disabled=false);return}
+  const j=await r.json();cur.resolution={resolution:j.resolution,note:note.trim()};renderResult(false);
+}
+function renderResult(animate){
+  const el=$("#resultBody");
+  if(!cur||!cur.decision){el.innerHTML=cur&&cur.live?`<div class="empty"><b>Working on it</b>The decision appears once every check has run.</div>`:`<div class="empty"><b>No decision yet</b>Run an invoice and the verdict, reasons and next steps land here.</div>`;return}
+  const r=cur.decision,d=r.decision,ex=r.extracted||{};
+  const fields=cur.stages.extract&&cur.stages.extract.data&&cur.stages.extract.data.fields||{};
+  const rows=[["Vendor","vendor_name"],["Invoice number","invoice_number"],["Invoice date","invoice_date"],["PO reference","po_reference"],["Subtotal","subtotal",1],["Tax","tax",1],["Total","total",1]]
+   .map(([lab,k,m])=>{const f=fields[k];const v=ex[k];const low=f&&f.confidence<0.6;
+     return `<tr><td>${lab}</td><td class="num">${v==null||v===""?'<span class="mut">not found</span>':esc(m?money(v):v)}${f?`<span class="src ${low?"low":""}">${esc(f.source)} ${Math.round(f.confidence*100)}%</span>`:""}</td></tr>`}).join("");
+  const msg=d.message?`<div class="sec"><details class="msg"><summary>Draft message to ${esc(d.message.to)}</summary><pre>Subject: ${esc(d.message.subject)}\n\n${esc(d.message.body)}</pre></details></div>`:"";
+  const kind=d.kind==="credit_note"?`<span class="conf"> · credit note</span>`:"";
+  el.innerHTML=`<div class="stampwrap"><div class="stamp ${d.status} ${animate?"land":""}">${LABEL[d.status]}</div><div class="conf">${esc(d.confidence)} confidence${r.duration_ms?` · ${(r.duration_ms/1000).toFixed(1)}s`:""}${kind}</div></div>
+   <p class="headline">${esc(d.headline)}</p>
+   <div class="body">
+    <div class="sec"><h4>Why</h4><ul>${(d.reasons||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    <div class="sec"><h4>What happens next</h4><ul>${(d.actions||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    ${reviewBlock(d)}
+    ${msg}
+    <div class="sec"><h4>What was read from the invoice</h4><table class="kv">${rows}</table></div>
+    <div class="sec"><details><summary style="cursor:pointer;font-weight:600">Original invoice</summary><div style="margin-top:8px"><iframe class="pdf" src="/api/runs/${cur.runId}/file" title="Invoice PDF"></iframe></div></details></div>
+   </div>`;
+  el.querySelectorAll(".review .btn").forEach(b=>b.onclick=()=>doReview(b.dataset.act));
+}
+
+/* ---------- dashboard */
+async function loadDash(){
+  const {runs,stats}=await (await fetch("/api/runs")).json();
+  allRuns=runs;
+  const n=stats.total, pctOf=x=>n?Math.round(100*x/n):0;
+  $("#kpis").innerHTML=[[n,"invoices processed"],[`${stats.auto_approved} (${pctOf(stats.auto_approved)}%)`,"approved without a person"],[stats.pending,"waiting for a person"],
+    [stats.resolved,"resolved by a person"],[money(stats.approved_amount),"approved for payment"],[(stats.avg_ms/1000).toFixed(1)+"s","average time per invoice"]]
+    .map(([v,l])=>`<div class="kpi"><b class="num">${esc(v)}</b><span>${l}</span></div>`).join("");
+  const max=Math.max(1,...stats.flags.map(f=>f.count));
+  $("#flags").innerHTML=stats.flags.length?stats.flags.map(f=>`<div class="bar"><span>${esc(f.label)}</span><i style="width:${Math.round(100*f.count/max)}%"></i><span class="n num">${f.count}</span></div>`).join("")
+    :`<p class="note">Nothing flagged yet. Run a few invoices.</p>`;
+  $("#roi").innerHTML=stats.auto_approved?`About <b>${stats.minutes_saved} minutes</b> of handling avoided: ${stats.auto_approved} invoice${stats.auto_approved>1?"s":""} approved without a person, at ${stats.manual_minutes} minutes each. The ${stats.manual_minutes} minutes is an assumption, not a measurement. Change it on the Rules tab.`
+    :`No invoices approved automatically yet, so nothing saved so far.`;
+  drawRows();
+}
+function drawRows(){
+  const q=$("#search").value.trim().toLowerCase();
+  const rows=allRuns.filter(r=>(filter==="ALL"||(filter==="PENDING"?((r.decision==="NEEDS_REVIEW"||r.decision==="ON_HOLD")&&!r.resolution):r.decision===filter))
+     &&(!q||[r.vendor,r.invoice_number,r.po_number,r.filename].join(" ").toLowerCase().includes(q)));
+  const resTxt={APPROVED:"Then approved by a person",REJECTED:"Then rejected by a person",INFO_REQUESTED:"Then: vendor asked for info"};
+  $("#runRows").innerHTML=rows.map(r=>`<tr class="row" tabindex="0" data-id="${r.id}"><td class="mut" style="white-space:nowrap">${new Date(r.created_at).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</td>
+    <td>${esc(r.vendor||"Unknown")}</td><td class="num">${esc(r.invoice_number||"none")}</td><td class="num">${esc(r.po_number||"none")}</td><td class="r num">${r.total==null?"n/a":money(r.total)}</td>
+    <td><span class="st ${r.decision}">${LABEL[r.decision]||r.decision}</span>${r.resolution?`<div class="res">${resTxt[r.resolution]||""}</div>`:""}</td><td class="hl">${esc(r.headline)}${r.resolution_note?`<div class="res">Note: ${esc(r.resolution_note)}</div>`:""}</td><td class="r num mut">${(r.duration_ms/1000).toFixed(1)}s</td></tr>`).join("");
+  $("#dashEmpty").classList.toggle("hidden",allRuns.length>0);
+  document.querySelectorAll("tr.row").forEach(tr=>{tr.onclick=()=>openRun(tr.dataset.id);tr.onkeydown=e=>{if(e.key==="Enter")openRun(tr.dataset.id)}});
+}
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{filter=c.dataset.f;document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawRows()});
+$("#search").oninput=drawRows;
+async function openRun(id){
+  const r=await (await fetch(`/api/runs/${id}`)).json();
+  cur={runId:id,filename:r.filename,stages:{},decision:r.result,live:false,resolution:r.resolution?{resolution:r.resolution,note:r.resolution_note||""}:null};
+  r.events.forEach(ev=>{if(ev.type==="stage")cur.stages[ev.stage]=ev});
+  document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"));
+  show("process");$("#trailSub").textContent=`Replaying ${r.filename}`;
+  renderTrail();renderResult(false);
+}
+
+/* ---------- rules */
+function sopHtml(v){
+  return [
+   `<b>Read.</b> A normal PDF is read directly. A scan is read with OCR, and if the scan quality is under <b>${pct(v.ocr_min_confidence)}</b> a person always checks it.`,
+   `<b>Extract and validate.</b> Vendor, invoice number, date, PO, subtotal, tax and total must be present, line items must add up to the subtotal, and subtotal plus tax must equal the total. When an API key is set, Claude reads the invoice too and any disagreement goes to a person.`,
+   `<b>Vendor.</b> The vendor must be on the approved list. An unknown vendor is rejected, even if it quotes a real PO number.`,
+   `<b>Purchase order.</b> The PO must exist, belong to this vendor and be open. With no PO on the invoice, one can be suggested from vendor and amount, but a person confirms it.`,
+   `<b>Amount.</b> Compared with what is <i>left</i> on the PO after earlier invoices. Over by no more than <b>${pct(v.auto_approve_pct)}</b> and <b>${money(v.auto_approve_abs)}</b>: approve with a note. Over by up to <b>${pct(v.review_pct)}</b>: a person decides. More than that: reject as a dispute.`,
+   `<b>Duplicates.</b> Same invoice number, or a near-identical number with the same amount within <b>${v.duplicate_window_days} days</b>, is held. Invoices still waiting for review count too.`,
+   `<b>Credit notes</b> are never paid. They go to a person, linked to the invoice they credit.`,
+   `<b>Anything unexpected</b>, including a processing error, goes to a person. Nothing is silently approved or dropped.`].map(x=>`<li>${x}</li>`).join("");
+}
+async function loadRules(){
+  const j=await (await fetch("/api/settings")).json(); settings=j; const v=j.values;
+  $("#sop").innerHTML=sopHtml(v);
+  $("#f_auto_pct").value=+(v.auto_approve_pct*100).toFixed(2); $("#f_auto_abs").value=v.auto_approve_abs; $("#f_review_pct").value=+(v.review_pct*100).toFixed(2);
+  $("#f_dup_days").value=v.duplicate_window_days; $("#f_ocr").value=Math.round(v.ocr_min_confidence*100); $("#f_minutes").value=v.manual_minutes;
+  const ed=!!ADMIN;
+  document.querySelectorAll("#rulesForm input").forEach(i=>i.disabled=!ed);
+  $("#rulesBtns").classList.toggle("hidden",!ed);
+  $("#rulesNote").textContent=ed?"Changes apply to every new invoice, for every visitor.":"Read-only here. These numbers are assumptions an AP team would tune.";
+  $("#rulesErr").textContent="";
+}
+async function saveRules(e){
+  e.preventDefault();
+  const body={auto_approve_pct:+$("#f_auto_pct").value/100,auto_approve_abs:+$("#f_auto_abs").value,review_pct:+$("#f_review_pct").value/100,
+    duplicate_window_days:Math.round(+$("#f_dup_days").value),ocr_min_confidence:+$("#f_ocr").value/100,manual_minutes:+$("#f_minutes").value};
+  const r=await fetch("/api/settings",{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Key":ADMIN},body:JSON.stringify(body)});
+  if(!r.ok){const j=await r.json().catch(()=>({}));$("#rulesErr").textContent=typeof j.detail==="string"?j.detail:"Check the values and try again.";return}
+  await loadRules(); $("#rulesErr").textContent="";
+}
+$("#rulesForm").onsubmit=saveRules;
+$("#defaultRules").onclick=async()=>{await fetch("/api/settings/reset",{method:"POST",headers:{"X-Admin-Key":ADMIN}});loadRules()};
+
+/* ---------- evaluation */
+$("#evalBtn").onclick=async()=>{
+  const b=$("#evalBtn");b.disabled=true;b.textContent="Running...";$("#evalOut").innerHTML="";
+  const r=await fetch("/api/eval",{method:"POST"});
+  b.disabled=false;b.textContent="Run evaluation";
+  if(!r.ok){const j=await r.json().catch(()=>({detail:"Evaluation failed"}));$("#evalOut").innerHTML=`<div class="empty"><b>Couldn't run the evaluation</b>${esc(j.detail)}</div>`;return}
+  const j=await r.json();
+  $("#evalOut").innerHTML=`<div class="evalsum"><div><b class="num">${j.matched} of ${j.total}</b><span>decisions match the expected one</span></div>
+    <div><b class="num">${j.straight_through_pct}%</b><span>approved without a person. This mix is edge-case heavy, so it is not a real-world rate.</span></div>
+    <div><b class="num">${j.total-j.approved_auto}</b><span>sent to a person or rejected</span></div></div>
+    <div class="tablewrap"><table class="runs"><thead><tr><th>Invoice</th><th>Expected</th><th>Got</th><th></th><th>Why</th></tr></thead><tbody>${
+    j.rows.map(r=>`<tr><td><b>${esc(r.title)}</b><div class="res">${esc(r.id)}</div></td><td><span class="st ${r.expected}">${LABEL[r.expected]}</span></td><td><span class="st ${r.got}">${LABEL[r.got]}</span></td>
+      <td class="${r.ok?"ok":"bad"}">${r.ok?"Match":"Differs"}</td><td class="hl">${esc(r.headline)}</td></tr>`).join("")}</tbody></table></div>`;
+};
+init();
+</script>
+</body>
+</html>

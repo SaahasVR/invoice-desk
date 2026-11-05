@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: invoice-desk
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: ANTHROPIC_API_KEY   # optional: enables the LLM extraction fallback
+        sync: false

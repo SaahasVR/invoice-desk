@@ -1,0 +1,6 @@
+[
+  {"vendor_id": "V001", "name": "Northwind Supplies LLC", "aliases": ["Northwind Supplies", "Northwind"], "approved": true, "country": "US", "tax_id": "12-3456789"},
+  {"vendor_id": "V002", "name": "Brightwave Digital Ltd", "aliases": ["Brightwave Digital", "Brightwave"], "approved": true, "country": "US", "tax_id": "98-7654321"},
+  {"vendor_id": "V003", "name": "Apex Industrial Parts Inc", "aliases": ["Apex Industrial Parts", "Apex Industrial"], "approved": true, "country": "US", "tax_id": "45-6789012"},
+  {"vendor_id": "V004", "name": "Meridian Logistics Co", "aliases": ["Meridian Logistics", "Meridian"], "approved": true, "country": "US", "tax_id": "33-2221110"}
+]

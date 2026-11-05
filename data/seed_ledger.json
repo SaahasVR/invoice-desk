@@ -1,0 +1,29 @@
+[
+  {
+    "vendor_id": "V004",
+    "invoice_number": "INV-2041",
+    "invoice_date": "2026-10-12",
+    "total": 3200.0,
+    "po_number": "PO-1003",
+    "status": "PAID",
+    "source": "seed"
+  },
+  {
+    "vendor_id": "V002",
+    "invoice_number": "BW-0087",
+    "invoice_date": "2026-09-30",
+    "total": 4000.0,
+    "po_number": "PO-1004",
+    "status": "PAID",
+    "source": "seed"
+  },
+  {
+    "vendor_id": "V002",
+    "invoice_number": "BW-0079",
+    "invoice_date": "2026-09-20",
+    "total": 6000.0,
+    "po_number": "PO-1008",
+    "status": "PAID",
+    "source": "seed"
+  }
+]

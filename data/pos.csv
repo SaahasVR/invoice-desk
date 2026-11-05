@@ -1,0 +1,11 @@
+po_number,vendor_id,description,net_amount,tax_rate,currency,status,issued
+PO-1001,V001,Office supplies Q4,4800.00,0.08,USD,open,2026-09-15
+PO-1002,V003,Industrial fasteners bulk order,12500.00,0.10,USD,open,2026-09-20
+PO-1003,V004,Freight services October,3200.00,0.00,USD,open,2026-10-01
+PO-1004,V002,Website redesign (milestone billing),12000.00,0.00,USD,open,2026-08-30
+PO-1005,V003,Replacement valves,6000.00,0.10,USD,open,2026-10-05
+PO-1006,V004,Warehouse handling November,1850.00,0.00,USD,open,2026-10-10
+PO-1007,V001,Printer toner restock,960.00,0.08,USD,open,2026-10-12
+PO-1008,V002,Mobile app build (milestone billing),10000.00,0.00,USD,open,2026-09-01
+PO-1009,V001,Quarterly facilities consumables,3000.00,0.08,USD,open,2026-10-02
+PO-1010,V004,Cross-dock labour week 44,2460.00,0.00,USD,open,2026-10-26

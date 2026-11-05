@@ -1,0 +1,5 @@
+runs.db
+uploads/
+__pycache__/
+*.pyc
+.env

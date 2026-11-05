@@ -1,0 +1,106 @@
+[
+  {
+    "id": "01_happy_path",
+    "file": "01_happy_path.pdf",
+    "title": "Clean invoice, exact PO match",
+    "tag": "happy",
+    "description": "Northwind bills PO-1001 for exactly the agreed amount. Vendor approved, PO open, no duplicates.",
+    "expected": "APPROVED"
+  },
+  {
+    "id": "02a_within_tolerance",
+    "file": "02a_within_tolerance.pdf",
+    "title": "Slightly over PO, within tolerance",
+    "tag": "edge",
+    "description": "Apex bills $68.75 over the PO value including tax (0.5%). Under the 2% / $100 auto-approve band, so it passes with a note.",
+    "expected": "APPROVED"
+  },
+  {
+    "id": "02b_over_tolerance",
+    "file": "02b_over_tolerance.pdf",
+    "title": "Over PO beyond tolerance",
+    "tag": "edge",
+    "description": "Apex bills 8% more than the PO value. Beyond auto-approve but under the dispute threshold, so a person must decide.",
+    "expected": "NEEDS_REVIEW"
+  },
+  {
+    "id": "03_duplicate_altered_number",
+    "file": "03_duplicate_altered_number.pdf",
+    "title": "Duplicate with altered invoice number",
+    "tag": "edge",
+    "description": "Meridian re-sends invoice INV-2041 as 'INV-2041A'. Same vendor, amount and date as one already paid.",
+    "expected": "ON_HOLD"
+  },
+  {
+    "id": "04a_split_po_ok",
+    "file": "04a_split_po_ok.pdf",
+    "title": "Split PO: second milestone invoice",
+    "tag": "edge",
+    "description": "Brightwave bills $4,000 against PO-1004 ($12,000). $4,000 was already paid, so cumulative billing stays within the PO.",
+    "expected": "APPROVED"
+  },
+  {
+    "id": "04b_split_po_overrun",
+    "file": "04b_split_po_overrun.pdf",
+    "title": "Split PO: invoice would overrun the PO",
+    "tag": "edge",
+    "description": "Brightwave bills $4,800 against PO-1008 ($10,000). With $6,000 already paid, cumulative billing would reach $10,800, over the PO.",
+    "expected": "NEEDS_REVIEW"
+  },
+  {
+    "id": "05_missing_fields",
+    "file": "05_missing_fields.pdf",
+    "title": "Missing invoice number and date",
+    "tag": "edge",
+    "description": "Apex sends an invoice with no invoice number and no date. The process can't dedupe or age it, so it asks for exactly what's missing.",
+    "expected": "NEEDS_REVIEW"
+  },
+  {
+    "id": "06_scanned_image",
+    "file": "06_scanned_image.pdf",
+    "title": "Scanned (image-only) invoice",
+    "tag": "edge",
+    "description": "Meridian's invoice arrives as a photographed scan with no text layer. OCR recovers the fields, then the normal checks run.",
+    "expected": "APPROVED"
+  },
+  {
+    "id": "07_no_po_reference",
+    "file": "07_no_po_reference.pdf",
+    "title": "No PO reference on the invoice",
+    "tag": "edge",
+    "description": "Northwind quotes no PO. The process infers the PO from vendor + amount but won't pay on an inferred match alone.",
+    "expected": "NEEDS_REVIEW"
+  },
+  {
+    "id": "08_unapproved_vendor",
+    "file": "08_unapproved_vendor.pdf",
+    "title": "Vendor not in the approved master",
+    "tag": "edge",
+    "description": "An unknown vendor submits an invoice quoting a real PO number. Quoting a PO is not proof of legitimacy.",
+    "expected": "REJECTED"
+  },
+  {
+    "id": "09_multipage",
+    "file": "09_multipage.pdf",
+    "title": "Two-page invoice, totals on page 2",
+    "tag": "edge",
+    "description": "Northwind's invoice runs to two pages with 30 line items; the subtotal, tax and total only appear on page 2. All pages must be read and reconciled.",
+    "expected": "APPROVED"
+  },
+  {
+    "id": "10_credit_note",
+    "file": "10_credit_note.pdf",
+    "title": "Credit note, not an invoice",
+    "tag": "edge",
+    "description": "Northwind sends a credit note for returned goods. It must never be paid, and it is linked to the invoice it credits.",
+    "expected": "NEEDS_REVIEW"
+  },
+  {
+    "id": "11_rough_scan",
+    "file": "11_rough_scan.pdf",
+    "title": "Poor phone photo of an invoice",
+    "tag": "edge",
+    "description": "Meridian's invoice is a tilted, shadowed, low-resolution phone photo. If the scan is too poor to trust, a person confirms the values.",
+    "expected": "NEEDS_REVIEW"
+  }
+]
