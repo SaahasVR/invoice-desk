@@ -11,6 +11,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+# Tesseract spawns one thread per visible core; on a throttled container that crawls. One thread is far faster.
+ENV OMP_THREAD_LIMIT=1
 ENV PORT=8000
 EXPOSE 8000
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

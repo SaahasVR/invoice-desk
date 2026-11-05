@@ -224,9 +224,16 @@ class Run:
         if not name:
             self.check("vendor", "Vendor identified", "fail", "No vendor name to check against the approved-vendor master.", ("VENDOR_UNKNOWN", "review"))
         elif best is None or best_score < 0.88:
-            self.check("vendor", "On approved-vendor master", "fail",
-                       f"'{name}' is not in the approved-vendor master. A valid PO number on the invoice does not make a vendor legitimate.",
-                       ("VENDOR_NOT_APPROVED", "reject"))
+            name_conf = (self.ctx["fields"].get("vendor_name") or {}).get("confidence", 1.0)
+            if name_conf < config.MIN_FIELD_CONFIDENCE:
+                # we could not READ the name reliably (poor scan): that is a reason to ask a person, not to reject a vendor
+                self.check("vendor", "Vendor name unreadable", "fail",
+                           f"The vendor name was read as '{name}' with low confidence, so it can't be matched to the approved-vendor master. "
+                           "A person should read it from the original.", ("VENDOR_UNKNOWN", "review"))
+            else:
+                self.check("vendor", "On approved-vendor master", "fail",
+                           f"'{name}' is not in the approved-vendor master. A valid PO number on the invoice does not make a vendor legitimate.",
+                           ("VENDOR_NOT_APPROVED", "reject"))
         else:
             self.ctx["vendor"] = best
             if not best["approved"]:

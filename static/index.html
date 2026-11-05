@@ -338,7 +338,9 @@ async function start(fd){
     else if(ev.type==="decision"){cur.decision=ev.result;renderResult(true)}
     else if(ev.type==="done"){es.close();cur.live=false;setBusy(false);$("#trailSub").textContent=`Finished ${filename}`;renderResult(false)}
   };
-  es.onerror=()=>{es.close();setBusy(false)};
+  es.onerror=()=>{es.close();setBusy(false);
+    if(cur&&!cur.decision){cur.live=false;$("#trailSub").textContent="Connection lost";
+      $("#resultBody").innerHTML=`<div class="empty"><b>The run was interrupted</b>The server may have restarted or been too slow. Nothing was approved. Run the invoice again.</div>`}};
 }
 /* drop zone */
 $("#pickBtn").onclick=()=>$("#fileInput").click();

@@ -30,6 +30,10 @@ def read_document(path):
     return _ocr(path, pages)
 
 
+OCR_DPI = 200            # 300 was needlessly slow on small hosts; 200 reads these invoices just as well
+OCR_TIMEOUT_SEC = 40     # per page: a stuck OCR must route to a person, never hang the run
+
+
 def _ocr(path, pages):
     try:
         import pytesseract
@@ -38,13 +42,24 @@ def _ocr(path, pages):
         return {"text": "", "method": "ocr_unavailable", "ocr_confidence": 0.0, "pages": pages, "error": str(e)}
     chunks, confs = [], []
     try:
-        images = convert_from_path(path, dpi=300)
-        for img in images:
+        for img in convert_from_path(path, dpi=OCR_DPI):
             gray = img.convert("L")
-            chunks.append(pytesseract.image_to_string(gray, config="--psm 6"))
-            data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT, config="--psm 6")
-            confs += [float(c) for c, t in zip(data["conf"], data["text"]) if str(t).strip() and float(c) >= 0]
-    except Exception as e:  # tesseract / poppler missing on this host: degrade to human review, don't crash
+            # ONE OCR pass: rebuild the text lines and the confidence from the same result
+            data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT, config="--psm 6",
+                                             timeout=OCR_TIMEOUT_SEC)
+            lines, order = {}, []
+            for i, word in enumerate(data["text"]):
+                if not str(word).strip():
+                    continue
+                key = (data["block_num"][i], data["par_num"][i], data["line_num"][i])
+                if key not in lines:
+                    lines[key] = []
+                    order.append(key)
+                lines[key].append(str(word))
+                if float(data["conf"][i]) >= 0:
+                    confs.append(float(data["conf"][i]))
+            chunks.append("\n".join(" ".join(lines[k]) for k in order))
+    except Exception as e:  # tesseract/poppler missing, or OCR timed out: degrade to human review, don't crash or hang
         return {"text": "", "method": "ocr_unavailable", "ocr_confidence": 0.0, "pages": pages, "error": str(e)[:200]}
     conf = (sum(confs) / len(confs) / 100.0) if confs else 0.0
     return {"text": "\n".join(chunks), "method": "ocr", "ocr_confidence": round(conf, 3), "pages": pages}
