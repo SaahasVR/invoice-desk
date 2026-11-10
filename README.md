@@ -85,7 +85,7 @@ Sample 11 is a *simulated* rough scan I generated. Real phone photos vary; the p
 
 For the **demo**, the strongest are `03`, `04a`/`04b`, `05`, `10` and `11`: they show deliberate logic rather than simple validation.
 
-## Assumptions (state these in the interview)
+## Assumptions
 
 - **PO amounts are net of tax.** The PO register stores net and tax rate; the process compares the invoice total with the *gross* remaining balance, so tax-embedded and tax-separate invoices both work.
 - **Tolerance:** auto-approve if over by no more than 2% of the PO value *and* $100; up to 10% goes to a person; more is rejected as a dispute. Measured against the PO value (the commitment), not the remaining balance. All illustrative and editable on the Rules tab.
