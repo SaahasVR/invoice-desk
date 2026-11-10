@@ -114,7 +114,7 @@ The app needs Tesseract and Poppler, so deploy it as a container (the `Dockerfil
 
 **Render (free):** push this folder to a GitHub repo, then New > Blueprint (or New > Web Service > Docker) pointing at the repo; `render.yaml` is included. In the service's environment settings add `APFLOW_ADMIN_KEY` (a long random string) and, optionally, `ANTHROPIC_API_KEY`. To edit thresholds, open `https://YOUR-APP.onrender.com/?admin=YOUR_KEY` and go to the Rules tab. Visitors without the key see the rules read-only.
 
-Free tiers sleep after inactivity, so **open the link a few minutes before the interview** and click through one sample to wake it.
+Free tiers sleep after inactivity, so click through one sample to wake it.
 
 ## Layout
 
